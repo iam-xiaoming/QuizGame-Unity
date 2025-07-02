@@ -23,6 +23,21 @@ public class Quiz : MonoBehaviour
     [SerializeField] Timer timer;
     [SerializeField] Image timerImage;
 
+    [Header("Scoring")]
+    [SerializeField] TextMeshProUGUI scoreText;
+    [SerializeField] ScoreKeeper scoreKeeper;
+
+    [Header("Progress Bar")]
+    [SerializeField] Slider progressBar;
+    int maximumQuestion;
+    int questionCount = 0;
+    public bool isCompleted = false;
+
+    void Start()
+    {
+        maximumQuestion = questions.Count;    
+    }
+
 
     void Update()
     {
@@ -31,9 +46,16 @@ public class Quiz : MonoBehaviour
 
         if (timer.loadNextQuestion)
         {
+            if (questionCount == maximumQuestion)
+            {
+                isCompleted = true;
+                return;
+            }
+
             hasAnsweredEarly = false;
-            GetNextQuestion();
             timer.loadNextQuestion = false;
+            GetNextQuestion();
+            UpdateProgressBar();
         }
         // If time is run out and users haven't clicked on answers yet,
         // then we display the correct answer and change sprite of the correct button;
@@ -47,6 +69,11 @@ public class Quiz : MonoBehaviour
             DisplayAnswers(-1);
             SetButtonState(false);
         }
+    }
+
+    void UpdateProgressBar()
+    {
+        progressBar.value = (float)questionCount / maximumQuestion;
     }
 
     void DisPlayQuestion()
@@ -69,6 +96,8 @@ public class Quiz : MonoBehaviour
 
         // This method means to set everything as default in Timer.cs script.
         timer.CancelTimer();
+
+        scoreText.text = "Score: " + scoreKeeper.CalculateScore() + "%";
     }
 
     void DisplayAnswers(int index)
@@ -80,6 +109,7 @@ public class Quiz : MonoBehaviour
         if (index == correctAnswerIndex)
         {
             questionText.text = "Correct!";
+            scoreKeeper.CorrectAnswers++;
         }
         else
         {
@@ -95,12 +125,14 @@ public class Quiz : MonoBehaviour
             SetButtonState(true);
             SetDefaultButtonSprites();
             DisPlayQuestion();
+            scoreKeeper.QuestionSeen++;
+            questionCount++;
         }
     }
 
     void GetRandomQuestion()
     {
-        Debug.Log(questions.Count);
+        // Debug.Log(questions.Count);
 
         int index = Random.Range(0, questions.Count);
         currentQuestion = questions[index];
